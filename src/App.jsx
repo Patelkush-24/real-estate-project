@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, MotionConfig } from "framer-motion";
+import ScrollProgress from "./components/ScrollProgress";
+import "./effects.css";
 import { useAuth } from "./AuthContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -27,7 +29,8 @@ function Guard({ admin, children }) {
 export default function App() {
   const loc = useLocation();
   return (
-    <>
+    <MotionConfig reducedMotion="user">
+      <ScrollProgress />
       <Navbar />
       <main>
         <AnimatePresence mode="wait">
@@ -50,6 +53,6 @@ export default function App() {
         </AnimatePresence>
       </main>
       <Footer />
-    </>
+    </MotionConfig>
   );
 }

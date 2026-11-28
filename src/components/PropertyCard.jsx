@@ -4,9 +4,17 @@ import { IoBedOutline, IoWaterOutline, IoResizeOutline } from "react-icons/io5";
 import { FiMapPin } from "react-icons/fi";
 import { inrShort } from "../api";
 
-export default function PropertyCard({ p }) {
+export default function PropertyCard({ p, index = 0 }) {
   return (
-    <motion.article className="card" layout whileHover={{ y: -4 }} transition={{ duration: 0.18 }}>
+    <motion.article
+      className="card"
+      layout
+      initial={{ opacity: 0, y: 36 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.5, delay: (index % 3) * 0.08 }}
+      whileHover={{ y: -6 }}
+    >
       <Link to={`/properties/${p.id}`} className="card-img">
         {p.image_url ? <img src={p.image_url} alt={p.title} loading="lazy" onError={(e) => (e.currentTarget.style.display = "none")} /> : null}
         <span className={`tag ${p.status}`}>{p.status === "sold" ? "Sold" : p.property_type}</span>
