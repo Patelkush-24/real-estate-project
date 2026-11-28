@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { FiSearch } from "react-icons/fi";
-import api from "../api";
+import { getWithRetry } from "../loadWithRetry";
+import WakingNotice from "../components/WakingNotice";
 import Page from "../components/Page";
 import PropertyCard from "../components/PropertyCard";
 
@@ -13,13 +14,21 @@ export default function Properties() {
   const [loading, setLoading] = useState(true);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
+  const [waking, setWaking] = useState(false);
+
   useEffect(() => {
+    let live = true;
+    let wake;
     const t = setTimeout(() => {
       setLoading(true);
+      wake = setTimeout(() => live && setWaking(true), 4000);
       const params = Object.fromEntries(Object.entries(f).filter(([, v]) => v));
-      api.get("/properties/", { params }).then((r) => setItems(r.data)).finally(() => setLoading(false));
+      getWithRetry("/properties/", { params })
+        .then((r) => live && setItems(r.data))
+        .catch(() => {})
+        .finally(() => { clearTimeout(wake); if (live) { setLoading(false); setWaking(false); } });
     }, 250);
-    return () => clearTimeout(t);
+    return () => { live = false; clearTimeout(t); clearTimeout(wake); };
   }, [f]);
 
   return (
@@ -44,6 +53,7 @@ export default function Properties() {
         </select>
       </div>
       <p className="muted">{loading ? "Searching..." : `${items.length} propert${items.length === 1 ? "y" : "ies"} found`}</p>
+      {loading && !items.length && <WakingNotice waking={waking} />}
       <div className="grid"><AnimatePresence>{items.map((p) => <PropertyCard key={p.id} p={p} />)}</AnimatePresence></div>
       {!loading && !items.length && <p className="empty">No properties match these filters. Try a wider budget or clear the search.</p>}
     </Page>

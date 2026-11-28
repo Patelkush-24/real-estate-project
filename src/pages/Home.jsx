@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, animate, motion, useInView, useScroll, useTransform } from "framer-motion";
 import { FiSearch, FiShield, FiMessageCircle, FiKey, FiArrowRight, FiMapPin } from "react-icons/fi";
-import api from "../api";
 import { useAuth } from "../AuthContext";
 import Page from "../components/Page";
 import PropertyCard from "../components/PropertyCard";
+import WakingNotice from "../components/WakingNotice";
+import { getWithRetry } from "../loadWithRetry";
 
 const stagger = { show: { transition: { staggerChildren: 0.13, delayChildren: 0.15 } } };
 const rise = { hidden: { opacity: 0, y: 28 }, show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } } };
@@ -54,7 +55,17 @@ export default function Home() {
   const textY = useTransform(scrollYProgress, [0, 1], [0, 90]);
   const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
-  useEffect(() => { api.get("/properties/").then((r) => setAll(r.data)).catch(() => {}); }, []);
+  const [loading, setLoading] = useState(true);
+  const [waking, setWaking] = useState(false);
+  useEffect(() => {
+    let live = true;
+    const t = setTimeout(() => live && setWaking(true), 4000);
+    getWithRetry("/properties/")
+      .then((r) => live && setAll(r.data))
+      .catch(() => {})
+      .finally(() => { clearTimeout(t); if (live) { setLoading(false); setWaking(false); } });
+    return () => { live = false; clearTimeout(t); };
+  }, []);
   useEffect(() => {
     const v = videoRef.current;
     if (v) { v.muted = true; v.play().catch(() => {}); }
@@ -112,7 +123,7 @@ export default function Home() {
           <Link to="/properties" className="link">View all properties</Link>
         </motion.div>
         <div className="grid">{all.slice(0, 6).map((p, i) => <PropertyCard key={p.id} p={p} index={i} />)}</div>
-        {!all.length && <p className="muted">Listings will appear here once the backend is running. The first load can take up to a minute.</p>}
+        {loading ? <WakingNotice waking={waking} /> : !all.length && <p className="muted">Could not load properties right now. Please refresh the page in a moment.</p>}
       </section>
 
       <section className="section steps">

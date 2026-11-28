@@ -9,10 +9,9 @@ export default function PropertyCard({ p, index = 0 }) {
     <motion.article
       className="card"
       layout
-      initial={{ opacity: 0, y: 36 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.5, delay: (index % 3) * 0.08 }}
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, delay: Math.min(index, 5) * 0.07 }}
       whileHover={{ y: -6 }}
     >
       <Link to={`/properties/${p.id}`} className="card-img">
